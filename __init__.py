@@ -14,7 +14,7 @@ class JernejStore(StoreBase):
     name = 'COPS server store'
     description = 'Store connected to COPS server'
     version = (0, 0, 1)
-    actual_plugin = 'calibre_plugins.store_cops.cops_store:CopsStorePlugin'
+    actual_plugin = 'calibre_plugins.cops_store.plugin:CopsStorePlugin'
     author = 'Blaz Kranjc'
 
     drm_free_only = True

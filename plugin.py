@@ -7,16 +7,16 @@ __license__ = 'GPL 3'
 __copyright__ = 'Blaz Kranjc <blaz.kranjc91@gmail.com>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QFormLayout, QLabel, QLineEdit
 from base64 import b64encode
 from contextlib import closing
 from os.path import dirname
 from calibre.gui2.store import StorePlugin
-from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
+from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.utils.opensearch.query import Query
 from calibre.utils.xml_parse import safe_xml_fromstring
 from calibre import (browser, guess_extension)
+from calibre_plugins.cops_store.config_widget import ConfigWidget
 
 
 AUTHORIZE_HEADER = "Authorization"
@@ -108,34 +108,6 @@ def search(browser, url, timeout=60):
                             yield book
 
 
-class ConfigWidget(QWidget):
-    def __init__(self, store):
-        QWidget.__init__(self)
-
-        self.urlField = QLineEdit()
-        self.usernameField = QLineEdit()
-        self.passwordField = QLineEdit()
-        layout = QFormLayout()
-        layout.addRow("URL:", self.urlField)
-        layout.addRow("Username:", self.usernameField)
-        layout.addRow("Password:", self.passwordField)
-        self.setLayout(layout)
-
-        self.store = store
-        self.urlField.setText(store.config.get('url', ''))
-        self.usernameField.setText(store.config.get('user', ''))
-        self.passwordField.setText(store.config.get('pass', ''))
-
-    def url(self):
-        return self.urlField.text()
-
-    def username(self):
-        return self.usernameField.text()
-
-    def password(self):
-        return self.passwordField.text()
-
-
 class CopsStorePlugin(BasicStoreConfig, StorePlugin):
 
     _b = None
@@ -155,7 +127,7 @@ class CopsStorePlugin(BasicStoreConfig, StorePlugin):
         return self._b
 
     def config_widget(self):
-        return ConfigWidget(self)
+        return ConfigWidget(self.config)
 
     def save_settings(self, config_widget):
         self.config['url'] = config_widget.url()

@@ -9,7 +9,7 @@ __docformat__ = 'restructuredtext en'
 
 from base64 import b64encode
 from contextlib import closing
-from os.path import dirname
+from urllib.parse import urljoin
 from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.basic_config import BasicStoreConfig
@@ -30,7 +30,7 @@ def get_template(browser, url):
         template = element.get('template')
         type = element.get('type')
         if template and type:
-            return template
+            return urljoin(url, template)
 
     for element in doc.xpath('//*[local-name() = "link"]'):
         if element.get('rel') != 'search':
@@ -38,7 +38,7 @@ def get_template(browser, url):
         href = element.get('href')
         type = element.get('type')
         if href and type:
-            return get_template(browser, dirname(url) + '/' + href)
+            return get_template(browser, urljoin(url, href))
 
     else:
         raise RuntimeError('Unable to find the template to use.')
@@ -60,12 +60,13 @@ def parse_book(data, base_url):
         type = link.get('type')
 
         if rel and href and type:
+            link_url = urljoin(base_url, href)
             if 'http://opds-spec.org/thumbnail' in rel:
-                s.cover_url = base_url + '/' + href
+                s.cover_url = link_url
             elif 'http://opds-spec.org/image/thumbnail' in rel:
-                s.cover_url = base_url + '/' + href
+                s.cover_url = link_url
             elif 'http://opds-spec.org/acquisition/buy' in rel:
-                s.detail_item = base_url + '/' + href
+                s.detail_item = link_url
             elif 'http://opds-spec.org/acquisition/sample' in rel:
                 pass
             elif 'http://opds-spec.org/acquisition' in rel:
@@ -73,7 +74,7 @@ def parse_book(data, base_url):
                     ext = guess_extension(type)
                     if ext:
                         ext = ext[1:].upper().strip()
-                        s.downloads[ext] = base_url + '/' + href
+                        s.downloads[ext] = link_url
     s.formats = ', '.join(s.downloads.keys()).strip()
 
     s.title = ' '.join(data.xpath(
@@ -97,13 +98,13 @@ def search(browser, url, timeout=60):
         data = safe_xml_fromstring(f.read())
         for entry in data.xpath('//*[local-name() = "entry"]'):
             if is_book(entry):
-                yield parse_book(entry, dirname(url))
+                yield parse_book(entry, url)
             else:
                 for link in entry.xpath('./*[local-name() = "link"]'):
                     href = link.get('href')
                     type = link.get('type')
                     if href and type:
-                        next_url = dirname(url) + '/' + href
+                        next_url = urljoin(url, href)
                         for book in search(browser, next_url, timeout):
                             yield book
 
